@@ -1,0 +1,6 @@
+{
+  "name": "GOLO — Glamorous Outfit & Luxurious Outlook",
+  "description": "A premium luxury fashion and lifestyle e-commerce platform featuring clothing, jewelry, bags, and luxury goods with a refined Obsidian and Gold aesthetic.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "System users and customers",
+      "type": "object",
+      "properties": {
+        "full_name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["customer", "admin"] },
+        "phone": { "type": "string" },
+        "avatar_url": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["full_name", "email", "role"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Luxury items for sale",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "description": { "type": "string" },
+        "brand": { "type": "string" },
+        "base_price": { "type": "number" },
+        "sale_price": { "type": "number" },
+        "stock_qty": { "type": "number" },
+        "is_active": { "type": "boolean" },
+        "is_featured": { "type": "boolean" },
+        "image_url": { "type": "string" },
+        "category_id": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "slug", "base_price", "category_id"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer purchase records",
+      "type": "object",
+      "properties": {
+        "order_number": { "type": "string" },
+        "user_id": { "type": "string" },
+        "status": { "type": "string" },
+        "total": { "type": "number" },
+        "items": { "type": "array" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["order_number", "user_id", "total", "items"]
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "products": {
+      "schema": "Product",
+      "description": "Inventory"
+    },
+    "orders": {
+      "schema": "Order",
+      "description": "Sale records"
+    }
+  }
+}
