@@ -1,27 +1,48 @@
 import jwt from 'jsonwebtoken';
 import { error } from '../utils/response.js';
-import db from '../db.js';
+import { supabase } from '../lib/supabase.js';
 
-export const authGuard = (req, res, next) => {
+export const authGuard = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return error(res, 'Authorization header missing or invalid', 401);
   }
 
   const token = authHeader.split(' ')[1];
+  
+  if (!token || token === 'undefined' || token === 'null') {
+    return error(res, 'Token missing or invalid format', 401);
+  }
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET || 'default_access_secret');
-    req.user = decoded;
     
-    // Check if user still exists and token version matches
-    const user = db.prepare('SELECT id, role, token_version FROM users WHERE id = ?').get(decoded.id);
-    if (!user || user.token_version !== decoded.version) {
-      return error(res, 'Token expired or invalid', 401);
+    // Check if user still exists in Supabase
+    const { data: user, error: supabaseError } = await supabase
+      .from('users')
+      .select('id, role, token_version')
+      .eq('id', decoded.id)
+      .single();
+
+    if (supabaseError || !user) {
+      return error(res, 'User record not found or vault connection error', 401);
+    }
+
+    if (user.token_version !== decoded.version) {
+      return error(res, 'Session invalidated (remote logout)', 401);
     }
     
+    req.user = {
+        ...decoded,
+        role: user.role // Use the most up-to-date role from DB
+    };
     next();
   } catch (err) {
-    return error(res, 'Token invalid', 401);
+    console.error('JWT Verification Error:', err.message);
+    if (err.name === 'TokenExpiredError') {
+      return error(res, 'Token expired', 401);
+    }
+    return error(res, 'Token invalid: ' + err.message, 401);
   }
 };
 

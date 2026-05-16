@@ -36,35 +36,39 @@ export default function ProductDetail() {
   }, [slug]);
 
   if (loading) return <div className="h-screen flex items-center justify-center font-display text-4xl animate-pulse">GOLO</div>;
-  if (!product) return <div className="py-40 text-center font-display text-2xl italic">The masterpiece could not be found.</div>;
+  if (!product) return <div className="py-40 text-center font-display text-4xl italic animate-pulse opacity-40">The masterpiece could not be found.</div>;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
+    <div className="max-w-[1400px] mx-auto px-6 py-40">
       {/* Breadcrumbs */}
-      <nav className="flex items-center space-x-2 text-[10px] uppercase tracking-[0.2em] font-bold opacity-40 mb-12">
+      <nav className="flex items-center space-x-4 text-[9px] uppercase tracking-[0.3em] font-bold opacity-40 mb-16">
         <Link to="/" className="hover:text-gold transition-colors">GOLO</Link>
-        <ChevronRight size={10} />
+        <div className="h-px w-4 bg-gold/30" />
         <Link to="/products" className="hover:text-gold transition-colors">Collection</Link>
-        <ChevronRight size={10} />
+        <div className="h-px w-4 bg-gold/30" />
         <Link to={`/products?category=${product.category_slug}`} className="hover:text-gold transition-colors">{product.category_name}</Link>
-        <ChevronRight size={10} />
-        <span className="text-gold">{product.name}</span>
+        <div className="h-px w-4 bg-gold/30" />
+        <span className="text-gold opacity-100">{product.name}</span>
       </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-start mb-32">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-start mb-32">
         {/* Gallery */}
-        <div className="space-y-4">
-          <div className="aspect-[3/4] overflow-hidden bg-ivory/50">
+        <div className="space-y-6">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="aspect-[3/4] overflow-hidden bg-gold/5 border border-gold/10 rounded-[2rem] shadow-2xl relative group"
+          >
             <img 
               src={product.image_url} 
               alt={product.name}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover transition-transform duration-[3s] group-hover:scale-110"
             />
-          </div>
+          </motion.div>
           {/* Thumbnails (Simulated) */}
           <div className="grid grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-                <div key={i} className={`aspect-square border border-gold/10 overflow-hidden cursor-pointer ${i === 0 ? 'ring-2 ring-gold' : 'opacity-60'}`}>
+                <div key={i} className={`aspect-square border border-gold/10 rounded-xl overflow-hidden cursor-pointer transition-all ${i === 0 ? 'ring-2 ring-gold' : 'opacity-40 hover:opacity-100'}`}>
                     <img src={product.image_url} className="h-full w-full object-cover" />
                 </div>
             ))}

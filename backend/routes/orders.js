@@ -1,5 +1,5 @@
 import express from 'express';
-import db from '../db.js';
+import { supabase } from '../lib/supabase.js';
 import { authGuard } from '../middleware/auth.js';
 import { success, error } from '../utils/response.js';
 
@@ -7,67 +7,109 @@ const router = express.Router();
 
 router.use(authGuard);
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { address_id, items, discount, shipping, tax, total, promo_code, payment_method, notes } = req.body;
   const user_id = req.user.id;
   const order_number = `GOLO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-  const transaction = db.transaction(() => {
-    // 1. Create order
+  try {
     const subtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-    const result = db.prepare(`
-      INSERT INTO orders (order_number, user_id, address_id, subtotal, discount, shipping, tax, total, promo_code, payment_method, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(order_number, user_id, address_id, subtotal, discount, shipping, tax, total, promo_code, payment_method, notes);
 
-    const order_id = result.lastInsertRowid;
+    // 1. Create order
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert([{
+        order_number,
+        user_id,
+        address_id,
+        subtotal,
+        discount,
+        shipping,
+        tax,
+        total,
+        promo_code,
+        payment_method,
+        notes,
+        status: 'pending'
+      }])
+      .select()
+      .single();
+
+    if (orderError) throw orderError;
 
     // 2. Create order items and update stock
-    const itemStmt = db.prepare(`
-      INSERT INTO order_items (order_id, product_id, variant_id, name, brand, image_url, quantity, unit_price, line_total)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    
-    const stockStmt = db.prepare('UPDATE products SET stock_qty = stock_qty - ? WHERE id = ?');
-
     for (const item of items) {
-      // Check stock
-      const product = db.prepare('SELECT stock_qty FROM products WHERE id = ?').get(item.product_id);
-      if (!product || product.stock_qty < item.quantity) {
+      // Check stock and decrement
+      const { data: product, error: stockLockError } = await supabase
+        .from('products')
+        .select('stock_qty')
+        .eq('id', item.product_id)
+        .single();
+      
+      if (stockLockError) throw stockLockError;
+      if (product.stock_qty < item.quantity) {
         throw new Error(`Insufficient stock for product: ${item.name}`);
       }
 
-      itemStmt.run(order_id, item.product_id, item.variant_id || null, item.name, item.brand, item.image_url, item.quantity, item.price, item.price * item.quantity);
-      stockStmt.run(item.quantity, item.product_id);
+      const { error: itemError } = await supabase
+        .from('order_items')
+        .insert([{
+          order_id: order.id,
+          product_id: item.product_id,
+          variant_id: item.variant_id || null,
+          name: item.name,
+          brand: item.brand,
+          image_url: item.image_url,
+          quantity: item.quantity,
+          unit_price: item.price,
+          line_total: item.price * item.quantity
+        }]);
+
+      if (itemError) throw itemError;
+
+      const { error: updateStockError } = await supabase
+        .from('products')
+        .update({ stock_qty: product.stock_qty - item.quantity })
+        .eq('id', item.product_id);
+
+      if (updateStockError) throw updateStockError;
     }
 
-    return order_id;
-  });
-
-  try {
-    const order_id = transaction();
-    success(res, 'Order placed successfully', { order_id, order_number }, 201);
+    success(res, 'Order placed successfully', { order_id: order.id, order_number }, 201);
   } catch (err) {
     error(res, err.message, 400);
   }
 });
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const orders = db.prepare('SELECT * FROM orders WHERE user_id = ? ORDER BY placed_at DESC').all(req.user.id);
+    const { data: orders, error: supabaseError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .order('placed_at', { ascending: false });
+
+    if (supabaseError) throw supabaseError;
     success(res, 'Orders fetched', { orders });
   } catch (err) {
     error(res, err.message);
   }
 });
 
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const order = db.prepare('SELECT * FROM orders WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-    if (!order) return error(res, 'Order not found', 404);
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('*, order_items(*)')
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .single();
 
-    const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(order.id);
-    order.items = items;
+    if (orderError) throw orderError;
+    
+    // Format for frontend
+    order.items = order.order_items;
+    delete order.order_items;
 
     success(res, 'Order details fetched', { order });
   } catch (err) {

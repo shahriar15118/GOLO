@@ -50,7 +50,7 @@ export default function Products() {
   }, [filters]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-20">
+    <div className="max-w-[1400px] mx-auto px-6 py-40">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-end mb-16 space-y-6">
         <div>

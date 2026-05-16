@@ -1,12 +1,18 @@
 import express from 'express';
-import db from '../db.js';
+import { supabase } from '../lib/supabase.js';
 import { success, error } from '../utils/response.js';
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const banners = db.prepare('SELECT * FROM banners WHERE is_active = 1 ORDER BY sort_order ASC').all();
+    const { data: banners, error: supabaseError } = await supabase
+      .from('banners')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (supabaseError) throw supabaseError;
     success(res, 'Banners fetched', { banners });
   } catch (err) {
     error(res, err.message);

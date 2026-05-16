@@ -43,68 +43,73 @@ export default function ProductCard({ product, ...props }: { product: any, [key:
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative aspect-[3/4] overflow-hidden bg-ivory/50">
+      <div className="relative aspect-[3/4] overflow-hidden bg-white dark:bg-gold/5 border border-gold/10 rounded-2xl shadow-2xl shadow-obsidian/10 dark:shadow-black/40 group-hover:border-gold/40 transition-colors duration-700">
         <Link to={`/product/${product.slug}`}>
           <img 
             src={product.image_url} 
             alt={product.name}
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className="h-full w-full object-cover transition-transform duration-[2s] ease-out group-hover:scale-110 brightness-[0.85] group-hover:brightness-100 rounded-2xl"
           />
         </Link>
 
-        {/* Badges */}
-        <div className="absolute top-4 left-4 flex flex-col space-y-2">
+        {/* Cinematic Reveal */}
+        <div className="absolute inset-0 bg-gradient-to-t from-obsidian/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none rounded-2xl" />
+        <div className="absolute inset-4 border border-gold/30 scale-105 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-1000 pointer-events-none rounded-xl" />
+
+        {/* Status Badges */}
+        <div className="absolute top-6 left-6 flex flex-col space-y-2 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-700">
           {discount > 0 && (
-            <span className="bg-rose text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest">
+            <span className="bg-rose text-ivory text-[8px] font-bold px-3 py-1 uppercase tracking-[0.2em] rounded-full shadow-lg">
               -{discount}%
             </span>
           )}
           {(product.is_featured === 1 || product.is_featured === true) && (
-            <span className="glass text-obsidian dark:text-ivory text-[10px] font-bold px-3 py-1 uppercase tracking-widest">
-              Limited
+            <span className="bg-gold text-obsidian text-[8px] font-bold px-3 py-1 uppercase tracking-[0.2em] rounded-full shadow-lg">
+              Limited Edition
             </span>
           )}
         </div>
 
-        {/* Quick Actions */}
-        <button 
-          onClick={toggleWishlist}
-          className="absolute top-4 right-4 p-2 rounded-full glass hover:bg-white transition-colors"
-        >
-          <motion.div
-            animate={{ scale: isWishlisted ? [1, 1.4, 1] : 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Heart size={16} className={isWishlisted ? 'fill-rose text-rose' : ''} />
-          </motion.div>
-        </button>
+        {/* Interactions */}
+        <div className="absolute top-6 right-6 flex flex-col space-y-3 transform translate-x-12 group-hover:translate-x-0 transition-all duration-700 delay-100">
+            <button 
+                onClick={toggleWishlist}
+                className="p-3 bg-obsidian/60 backdrop-blur-md border border-gold/20 text-gold hover:bg-gold hover:text-obsidian transition-all duration-500 rounded-full group/fav"
+            >
+                <Heart size={14} className={isWishlisted ? 'fill-gold' : 'group-hover/fav:scale-110 transition-transform'} />
+            </button>
+        </div>
 
         <motion.button 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0 }}
           onClick={() => addItem(product)}
-          className="absolute bottom-4 left-4 right-4 bg-obsidian text-gold py-4 text-[10px] font-bold uppercase tracking-[0.2em] flex items-center justify-center space-x-2"
+          className="absolute bottom-6 left-6 right-6 bg-ivory text-obsidian py-4 text-[9px] font-bold uppercase tracking-[0.4em] flex items-center justify-center space-x-3 transition-all hover:bg-gold rounded-full shadow-2xl"
         >
-          <ShoppingBag size={14} />
-          <span>Add to Bag</span>
+          <ShoppingBag size={14} strokeWidth={2.5} />
+          <span>Add to Collection</span>
         </motion.button>
       </div>
 
-      <div className="mt-6 text-center">
-        <p className="text-[10px] uppercase tracking-[0.3em] opacity-50 mb-1">{product.brand}</p>
-        <h3 className="font-display text-lg mb-2">
-          <Link to={`/product/${product.slug}`} className="hover:text-gold transition-colors">
+      <div className="mt-8 text-center space-y-3 px-2">
+        <div className="flex items-center justify-center space-x-4">
+            <div className="h-[0.5px] w-8 bg-gold/20" />
+            <p className="text-[8px] uppercase tracking-[0.6em] text-gold font-bold">{product.brand}</p>
+            <div className="h-[0.5px] w-8 bg-gold/20" />
+        </div>
+        <h3 className="font-display text-2xl tracking-tight leading-tight">
+          <Link to={`/product/${product.slug}`} className="hover:text-gold transition-colors block text-obsidian dark:text-ivory">
             {product.name}
           </Link>
         </h3>
-        <div className="flex items-center justify-center space-x-3">
+        <div className="flex items-center justify-center space-x-4 pt-1">
           {product.sale_price ? (
             <>
-              <span className="text-gold font-bold">৳{product.sale_price}</span>
-              <span className="text-gray-400 line-through text-sm">৳{product.base_price}</span>
+              <span className="text-gold font-bold tracking-[0.2em] text-lg italic">৳{product.sale_price.toLocaleString()}</span>
+              <span className="text-obsidian/40 dark:text-ivory/20 line-through text-[10px] tracking-widest font-light">৳{product.base_price.toLocaleString()}</span>
             </>
           ) : (
-            <span className="text-obsidian dark:text-ivory">৳{product.base_price}</span>
+            <span className="text-obsidian/70 dark:text-ivory/70 font-medium tracking-[0.2em] text-lg italic">৳{product.base_price.toLocaleString()}</span>
           )}
         </div>
       </div>

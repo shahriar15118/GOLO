@@ -13,6 +13,8 @@ export const facebookProvider = new FacebookAuthProvider();
 export const twitterProvider = new TwitterAuthProvider();
 
 // Test connection strictly as requested in integration guidelines
+// Commented out to avoid noise while user sets up Supabase
+/*
 async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
@@ -23,3 +25,4 @@ async function testConnection() {
   }
 }
 testConnection();
+*/

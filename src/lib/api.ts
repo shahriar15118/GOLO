@@ -26,6 +26,12 @@ async function request(endpoint: string, options: RequestOptions = {}) {
   const response = await fetch(url, { ...init, headers });
   const data = await response.json();
 
+  if (response.status === 401) {
+    localStorage.removeItem('golo_token');
+    localStorage.removeItem('golo_user');
+    window.location.href = '/auth/login';
+  }
+
   if (!response.ok) {
     throw new Error(data.message || 'Something went wrong');
   }

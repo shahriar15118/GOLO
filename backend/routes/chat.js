@@ -1,6 +1,6 @@
 import express from 'express';
 import { GoogleGenAI } from '@google/genai';
-import db from '../db.js';
+import { supabase } from '../lib/supabase.js';
 import { success, error } from '../utils/response.js';
 
 const router = express.Router();
@@ -27,21 +27,32 @@ router.post('/message', async (req, res) => {
 
   try {
     // Save user message
-    db.prepare('INSERT INTO chat_messages (session_id, user_id, role, message) VALUES (?, ?, ?, ?)')
-      .run(sessionId, userId || null, 'user', message);
+    const { error: userMsgError } = await supabase
+      .from('chat_messages')
+      .insert([{ 
+        session_id: sessionId, 
+        user_id: userId || null, 
+        role: 'user', 
+        message: message 
+      }]);
+    
+    if (userMsgError) throw userMsgError;
 
     // Get history
-    const history = db.prepare('SELECT role, message FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC LIMIT 10')
-      .all(sessionId);
+    const { data: history, error: historyError } = await supabase
+      .from('chat_messages')
+      .select('role, message')
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: true })
+      .limit(10);
+
+    if (historyError) throw historyError;
 
     // Call Gemini
     const contents = history.map(h => ({
       role: h.role === 'user' ? 'user' : 'model',
       parts: [{ text: h.message }]
     }));
-
-    // If history is empty, the first message is the current one (already saved to DB and thus in history)
-    // Wait, history includes the message just saved.
 
     const result = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -54,8 +65,16 @@ router.post('/message', async (req, res) => {
     const responseText = result.text;
 
     // Save assistant message
-    db.prepare('INSERT INTO chat_messages (session_id, user_id, role, message) VALUES (?, ?, ?, ?)')
-      .run(sessionId, userId || null, 'assistant', responseText);
+    const { error: assistantMsgError } = await supabase
+      .from('chat_messages')
+      .insert([{ 
+        session_id: sessionId, 
+        user_id: userId || null, 
+        role: 'model', 
+        message: responseText 
+      }]);
+
+    if (assistantMsgError) throw assistantMsgError;
 
     success(res, 'Message sent', { response: responseText });
   } catch (err) {
@@ -64,9 +83,15 @@ router.post('/message', async (req, res) => {
   }
 });
 
-router.get('/history/:sessionId', (req, res) => {
+router.get('/history/:sessionId', async (req, res) => {
   try {
-    const history = db.prepare('SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC').all(req.params.sessionId);
+    const { data: history, error: supabaseError } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('session_id', req.params.sessionId)
+      .order('created_at', { ascending: true });
+
+    if (supabaseError) throw supabaseError;
     success(res, 'Chat history fetched', { history });
   } catch (err) {
     error(res, err.message);

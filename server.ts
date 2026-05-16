@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
@@ -13,8 +14,14 @@ import promotionRoutes from './backend/routes/promotions.js';
 import bannerRoutes from './backend/routes/banners.js';
 import chatRoutes from './backend/routes/chat.js';
 import adminRoutes from './backend/routes/admin.js';
+import noticeRoutes from './backend/routes/notices.js';
+import supportRoutes from './backend/routes/support.js';
+import healthRoutes from './backend/routes/health.js';
 
 async function startServer() {
+  // Initialize Database
+  initDb();
+
   const app = express();
   const PORT = 3000;
 
@@ -26,9 +33,6 @@ async function startServer() {
   app.use(compression());
   app.use(express.json());
 
-  // Init Database
-  initDb();
-
   // API Routes
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/v1/products', productRoutes);
@@ -38,6 +42,9 @@ async function startServer() {
   app.use('/api/v1/banners', bannerRoutes);
   app.use('/api/v1/chat', chatRoutes);
   app.use('/api/v1/admin', adminRoutes);
+  app.use('/api/v1/notices', noticeRoutes);
+  app.use('/api/v1/support', supportRoutes);
+  app.use('/api/v1/health', healthRoutes);
 
   // Vite integration
   if (process.env.NODE_ENV !== 'production') {

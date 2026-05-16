@@ -113,7 +113,7 @@ export default function Account() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-20">
+    <div className="max-w-[1400px] mx-auto px-6 py-40">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-20">
         {/* Sidebar */}
         <aside className="lg:col-span-1 space-y-12">

@@ -18,7 +18,7 @@
   }
   
   body {
-    @apply font-sans bg-ivory text-obsidian transition-colors duration-300;
+    @apply font-sans bg-ivory text-obsidian antialiased transition-colors duration-300;
   }
   
   body.dark {
@@ -33,21 +33,28 @@
 /* Custom Utilities */
 @layer utilities {
   .glass {
-    @apply backdrop-blur-md bg-white/70 border border-white/20;
-  }
-  .dark .glass {
-    @apply bg-black/70 border-white/10;
+    @apply backdrop-blur-md bg-ivory/80 dark:bg-obsidian/80 border border-gold/10 dark:border-white/10 transition-colors duration-300;
   }
   
+  .luxury-gradient {
+    background: radial-gradient(circle at center, rgba(201, 169, 110, 0.05) 0%, transparent 70%);
+  }
+
+  .grain-overlay {
+    background-image: url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
+    opacity: 0.03;
+    pointer-events: none;
+  }
+
   .marquee-content {
     display: flex;
     animation: marquee 30s linear infinite;
   }
-  
-  @keyframes marquee {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 /* Luxury Skeleton Shimmer */

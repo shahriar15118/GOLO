@@ -41,10 +41,11 @@ export default function BannerCarousel({ banners }: { banners: Banner[] }) {
           className="absolute inset-0"
         >
           <div 
-            className="absolute inset-0 bg-cover bg-center" 
+            className="absolute inset-0 bg-cover bg-center bg-obsidian" 
             style={{ backgroundImage: `url(${banners[current].image_url})` }}
           >
             <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent h-40" />
           </div>
 
           <div className="relative h-full max-w-7xl mx-auto px-4 flex flex-col justify-center items-start text-ivory">

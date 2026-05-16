@@ -1,14 +1,20 @@
 import express from 'express';
-import db from '../db.js';
+import { supabase } from '../lib/supabase.js';
 import { success, error } from '../utils/response.js';
 
 const router = express.Router();
 
-router.post('/validate', (req, res) => {
+router.post('/validate', async (req, res) => {
   const { code, amount } = req.body;
   try {
-    const promo = db.prepare('SELECT * FROM promotions WHERE code = ? AND is_active = 1').get(code);
-    if (!promo) return error(res, 'Invalid promotion code', 400);
+    const { data: promo, error: supabaseError } = await supabase
+      .from('promotions')
+      .select('*')
+      .eq('code', code)
+      .eq('is_active', true)
+      .single();
+
+    if (supabaseError || !promo) return error(res, 'Invalid promotion code', 400);
 
     const now = new Date();
     if (promo.starts_at && new Date(promo.starts_at) > now) return error(res, 'Promotion not yet active', 400);

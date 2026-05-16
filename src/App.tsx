@@ -20,6 +20,9 @@ const Checkout = lazy(() => import('./pages/Checkout'));
 const OrderConfirmation = lazy(() => import('./pages/OrderConfirmation'));
 const Account = lazy(() => import('./pages/Account'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const SupportPage = lazy(() => import('./pages/SupportPage'));
+import NoticeBanner from './components/NoticeBanner';
+import ScrollToTop from './components/ScrollToTop';
 
 export default function App() {
   return (
@@ -28,11 +31,13 @@ export default function App() {
         <AuthProvider>
         <CartProvider>
           <BrowserRouter>
+            <ScrollToTop />
             <div className="min-h-screen flex flex-col">
+              <NoticeBanner />
               <Navbar />
               <CartDrawer />
               
-              <main className="flex-grow pt-20">
+              <main className="flex-grow">
                 <Suspense fallback={<div className="h-screen flex items-center justify-center font-display text-2xl animate-pulse">GOLO</div>}>
                   <AnimatePresence mode="wait">
                     <Routes>
@@ -44,6 +49,7 @@ export default function App() {
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/orders/:id" element={<OrderConfirmation />} />
                       <Route path="/account/*" element={<Account />} />
+                      <Route path="/support" element={<SupportPage />} />
                       <Route path="/admin/*" element={<AdminDashboard />} />
                     </Routes>
                   </AnimatePresence>

